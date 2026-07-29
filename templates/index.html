@@ -3,154 +3,55 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MamAudio — Transcrição de Áudio Inteligente</title>
-
-    <!-- Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-
-    <!-- Font Awesome Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-
-    <!-- Custom CSS -->
+    <title>MamAudio - Transcrição de Áudio Inteligente</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <!-- Ícones Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-    <div class="bg-glow bg-glow-1"></div>
-    <div class="bg-glow bg-glow-2"></div>
-    <div class="bg-grid"></div>
-
-    <div class="app-container">
-        <!-- BARRA NAVEGAÇÃO -->
-        <nav class="navbar">
-            <div class="brand">
-                <span class="brand-icon"><i class="fa-solid fa-wave-square"></i></span>
-                <span class="brand-name">Mam<span class="highlight">Audio</span></span>
-                <span class="badge-tech">v2.0 AI Audio Processing</span>
-            </div>
-            <div class="nav-links">
-                <a href="#como-funciona" class="nav-item">Como Funciona</a>
-                <a href="https://github.com/mariamorioka/mamaudio" target="_blank" rel="noopener noreferrer" class="nav-item">
-                    <i class="fa-brands fa-github"></i> GitHub
-                </a>
-            </div>
-        </nav>
-
-        <!-- HEADER / HERO -->
-        <header class="hero">
-            <h1 class="hero-title">Transcrição de Arquivos de Áudio <br><span class="gradient-text">Rápida &amp; Privada</span></h1>
-            <p class="hero-subtitle">
-                Faça upload dos seus arquivos de áudio (MP3, WAV, M4A, OGG) e obtenha a transcrição em texto rapidamente.
-            </p>
+    <div class="container">
+        <header>
+            <h1>🎙️ MamAudio</h1>
+            <p>Transcrição de áudio em tempo real com alta privacidade</p>
         </header>
 
-        <!-- MAIN INTERFACE DE UPLOAD E TRANSCRIÇÃO -->
-        <main class="main-card">
-            <!-- Área de Upload de Arquivo -->
-            <form id="upload-form" class="upload-area" id="drop-zone">
-                <input type="file" id="audio-file" name="audio" accept="audio/*" hidden required>
-                
-                <div class="upload-content" id="upload-trigger">
-                    <div class="upload-icon"><i class="fa-solid fa-cloud-arrow-up"></i></div>
-                    <h3>Selecione ou arraste seu arquivo de áudio</h3>
-                    <p class="upload-hint">Suporta MP3, WAV, M4A, OGG, FLAC</p>
-                    <button type="button" class="btn btn-record" onclick="document.getElementById('audio-file').click();">
-                        <i class="fa-solid fa-file-audio"></i> Escolher Arquivo
+        <main>
+            <div class="card">
+                <div class="controls">
+                    <button id="btn-record" class="btn btn-primary">
+                        <i class="fa-solid fa-microphone"></i> Iniciar Gravação
+                    </button>
+                    <button id="btn-stop" class="btn btn-danger" disabled>
+                        <i class="fa-solid fa-square"></i> Parar
                     </button>
                 </div>
-                
-                <div id="file-info" class="file-info-box" style="display: none;">
-                    <i class="fa-solid fa-file-wave"></i>
-                    <span id="file-name">arquivo.mp3</span>
-                    <button type="submit" id="btn-transcribe" class="btn btn-record">
-                        <i class="fa-solid fa-bolt"></i> Transcrever Áudio
-                    </button>
-                </div>
-            </form>
 
-            <div id="status" class="status-badge status-ready" style="margin-top: 1.5rem; justify-content: center;">
-                <span class="status-dot"></span>
-                <span class="status-text" id="status-text">Aguardando arquivo de áudio...</span>
-            </div>
-
-            <!-- Caixas de Transcrição -->
-            <div class="transcription-workspace" style="margin-top: 1.5rem;">
-                <div class="workspace-header">
-                    <h3><i class="fa-solid fa-align-left"></i> Texto Transcrito</h3>
-                    <button id="btn-copy" class="btn-icon" title="Copiar texto" onclick="copyTranscription()">
-                        <i class="fa-regular fa-copy"></i> Copiar
-                    </button>
+                <div id="status" class="status-indicator">
+                    Pronto para gravar...
                 </div>
-                <div id="transcription-output" class="output-box">
-                    <span class="placeholder-text">O texto transcrito do seu arquivo aparecerá aqui...</span>
+
+                <div class="transcription-container">
+                    <h3>Transcrição:</h3>
+                    <div id="transcription-output" class="output-box">
+                        Clique em "Iniciar Gravação" e fale algo...
+                    </div>
                 </div>
             </div>
         </main>
 
-        <!-- SEÇÃO COMO FUNCIONA (#como-funciona) -->
-        <section id="como-funciona" class="how-it-works-section">
-            <div class="section-header">
-                <span class="section-tag">FLUXO SIMPLES &amp; EFICIENTE</span>
-                <h2>Como Funciona o MamAudio?</h2>
-                <p>Nossa plataforma oferece um processo descomplicado para converter suas gravações e arquivos de áudio em texto inteligível.</p>
-            </div>
-
-            <div class="features-grid">
-                <!-- Card 1 -->
-                <div class="feature-card">
-                    <div class="feature-icon"><i class="fa-solid fa-file-arrow-up"></i></div>
-                    <h3>1. Envio do Arquivo</h3>
-                    <p>Faça upload de audiências, notas de voz, reuniões ou depoimentos gravados em múltiplos formatos de áudio.</p>
-                </div>
-
-                <!-- Card 2 -->
-                <div class="feature-card">
-                    <div class="feature-icon"><i class="fa-solid fa-microchip"></i></div>
-                    <h3>2. Processamento Neural</h3>
-                    <p>O áudio é processado por modelos avançados de reconhecimento de fala otimizados para converter áudio em texto legível.</p>
-                </div>
-
-                <!-- Card 3 -->
-                <div class="feature-card">
-                    <div class="feature-icon"><i class="fa-solid fa-copy"></i></div>
-                    <h3>3. Cópia &amp; Utilização</h3>
-                    <p>Receba a transcrição pronta na tela para copiar, editar ou integrar diretamente aos seus documentos e peças jurídicas.</p>
-                </div>
-            </div>
-        </section>
-
-        <!-- RODAPÉ FUTURISTA (Sem Instagram) -->
-        <footer class="footer">
-            <div class="footer-content">
-                <p class="credits">
-                    Engenharia &amp; Desenvolvimento por <strong>Maria Aparecida Morioka</strong>
-                </p>
-                <div class="social-links">
-                    <a href="https://github.com/mariamorioka/mamaudio" target="_blank" rel="noopener noreferrer" class="social-btn">
-                        <i class="fa-brands fa-github"></i> GitHub
-                    </a>
-                    <a href="https://www.linkedin.com/in/maria-aparecida-assis-morioka-8361b012a/" target="_blank" rel="noopener noreferrer" class="social-btn">
-                        <i class="fa-brands fa-linkedin"></i> LinkedIn
-                    </a>
-                </div>
-            </div>
-            <div class="footer-bottom">
-                <p>&copy; 2026 MamAudio — Todos os direitos reservados.</p>
+        <footer>
+            <p>Desenvolvido por <strong>Maria Aparecida Morioka</strong></p>
+            <div class="social-links">
+                <a href="https://github.com/mariamorioka/mamaudio" target="_blank" rel="noopener noreferrer" title="GitHub">
+                    <i class="fa-brands fa-github"></i> GitHub
+                </a>
+                <a href="https://www.linkedin.com/in/maria-aparecida-assis-morioka-8361b012a/" target="_blank" rel="noopener noreferrer" title="LinkedIn">
+                    <i class="fa-brands fa-linkedin"></i> LinkedIn
+                </a>
             </div>
         </footer>
     </div>
 
-    <!-- Script auxiliar para copiar -->
-    <script>
-        function copyTranscription() {
-            const output = document.getElementById('transcription-output').innerText;
-            if (output && !output.includes('O texto transcrito')) {
-                navigator.clipboard.writeText(output);
-                alert('Transcrição copiada para a área de transferência!');
-            }
-        }
-    </script>
     <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 </html>
