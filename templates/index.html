@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MamAudio — Transcrição de Áudio Inteligente & Privada</title>
+    <title>MamAudio — Transcrição de Áudio Inteligente</title>
 
-    <!-- Google Fonts: Inter & JetBrains Mono -->
+    <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -27,7 +27,7 @@
             <div class="brand">
                 <span class="brand-icon"><i class="fa-solid fa-wave-square"></i></span>
                 <span class="brand-name">Mam<span class="highlight">Audio</span></span>
-                <span class="badge-tech">v2.0 Client-Side AI</span>
+                <span class="badge-tech">v2.0 AI Audio Processing</span>
             </div>
             <div class="nav-links">
                 <a href="#como-funciona" class="nav-item">Como Funciona</a>
@@ -39,44 +39,51 @@
 
         <!-- HEADER / HERO -->
         <header class="hero">
-            <h1 class="hero-title">Transcrição de Áudio Inteligente <br><span class="gradient-text">&amp; 100% Privada</span></h1>
+            <h1 class="hero-title">Transcrição de Arquivos de Áudio <br><span class="gradient-text">Rápida &amp; Privada</span></h1>
             <p class="hero-subtitle">
-                Processamento neural diretamente no seu navegador. Zero envio de dados para servidores externos.
+                Faça upload dos seus arquivos de áudio (MP3, WAV, M4A, OGG) e obtenha a transcrição em texto rapidamente.
             </p>
         </header>
 
-        <!-- MAIN INTERFACE DE TRANSCRIÇÃO -->
+        <!-- MAIN INTERFACE DE UPLOAD E TRANSCRIÇÃO -->
         <main class="main-card">
-            <!-- Painel de Controle de Áudio -->
-            <div class="audio-panel">
-                <div class="controls-group">
-                    <button id="btn-record" class="btn btn-record">
-                        <span class="btn-pulse"></span>
-                        <i class="fa-solid fa-microphone"></i>
-                        <span>Iniciar Gravação</span>
-                    </button>
-                    <button id="btn-stop" class="btn btn-stop" disabled>
-                        <i class="fa-solid fa-stop"></i>
-                        <span>Parar</span>
+            <!-- Área de Upload de Arquivo -->
+            <form id="upload-form" class="upload-area" id="drop-zone">
+                <input type="file" id="audio-file" name="audio" accept="audio/*" hidden required>
+                
+                <div class="upload-content" id="upload-trigger">
+                    <div class="upload-icon"><i class="fa-solid fa-cloud-arrow-up"></i></div>
+                    <h3>Selecione ou arraste seu arquivo de áudio</h3>
+                    <p class="upload-hint">Suporta MP3, WAV, M4A, OGG, FLAC</p>
+                    <button type="button" class="btn btn-record" onclick="document.getElementById('audio-file').click();">
+                        <i class="fa-solid fa-file-audio"></i> Escolher Arquivo
                     </button>
                 </div>
+                
+                <div id="file-info" class="file-info-box" style="display: none;">
+                    <i class="fa-solid fa-file-wave"></i>
+                    <span id="file-name">arquivo.mp3</span>
+                    <button type="submit" id="btn-transcribe" class="btn btn-record">
+                        <i class="fa-solid fa-bolt"></i> Transcrever Áudio
+                    </button>
+                </div>
+            </form>
 
-                <div id="status" class="status-badge status-ready">
-                    <span class="status-dot"></span>
-                    <span class="status-text">Pronto para capturar áudio...</span>
-                </div>
+            <div id="status" class="status-badge status-ready" style="margin-top: 1.5rem; justify-content: center;">
+                <span class="status-dot"></span>
+                <span class="status-text" id="status-text">Aguardando arquivo de áudio...</span>
             </div>
 
-            <!-- Visualizador / Caixas de Transcrição -->
-            <div class="transcription-workspace">
+            <!-- Caixas de Transcrição -->
+            <div class="transcription-workspace" style="margin-top: 1.5rem;">
                 <div class="workspace-header">
-                    <h3><i class="fa-solid fa-terminal"></i> Transcrição em Tempo Real</h3>
+                    <h3><i class="fa-solid fa-align-left"></i> Texto Transcrito</h3>
                     <button id="btn-copy" class="btn-icon" title="Copiar texto" onclick="copyTranscription()">
                         <i class="fa-regular fa-copy"></i> Copiar
                     </button>
                 </div>
                 <div id="transcription-output" class="output-box">
-                    <span class="placeholder-text">Clique no botão de gravação para iniciar a captura de áudio...</span>
+                    <span class="placeholder-text">O texto transcrito do seu arquivo aparecerá aqui...</span>
                 </div>
             </div>
         </main>
@@ -84,31 +91,31 @@
         <!-- SEÇÃO COMO FUNCIONA (#como-funciona) -->
         <section id="como-funciona" class="how-it-works-section">
             <div class="section-header">
-                <span class="section-tag">ARQUITETURA &amp; SEGURANÇA</span>
+                <span class="section-tag">FLUXO SIMPLES &amp; EFICIENTE</span>
                 <h2>Como Funciona o MamAudio?</h2>
-                <p>Nossa plataforma foi projetada sob o paradigma <em>Privacy-First Execution</em>, combinando web standards modernos com inteligência artificial avançada.</p>
+                <p>Nossa plataforma oferece um processo descomplicado para converter suas gravações e arquivos de áudio em texto inteligível.</p>
             </div>
 
             <div class="features-grid">
                 <!-- Card 1 -->
                 <div class="feature-card">
-                    <div class="feature-icon"><i class="fa-solid fa-microphone-lines"></i></div>
-                    <h3>1. Captura de Alta Fidelidade</h3>
-                    <p>Utilizamos a <strong>Web Audio API</strong> nativa do navegador para processar o fluxo do microfone em baixíssima latência, isolando ruídos e preparando o sinal de áudio.</p>
+                    <div class="feature-icon"><i class="fa-solid fa-file-arrow-up"></i></div>
+                    <h3>1. Envio do Arquivo</h3>
+                    <p>Faça upload de audiências, notas de voz, reuniões ou depoimentos gravados em múltiplos formatos de áudio.</p>
                 </div>
 
                 <!-- Card 2 -->
                 <div class="feature-card">
                     <div class="feature-icon"><i class="fa-solid fa-microchip"></i></div>
-                    <h3>2. Modelo Neural Whisper Local</h3>
-                    <p>Através de <strong>Transformers.js</strong> e <strong>WebAssembly (WASM)</strong>, a IA Whisper executa diretamente no processador da sua máquina sem necessidade de APIs remotas.</p>
+                    <h3>2. Processamento Neural</h3>
+                    <p>O áudio é processado por modelos avançados de reconhecimento de fala otimizados para converter áudio em texto legível.</p>
                 </div>
 
                 <!-- Card 3 -->
                 <div class="feature-card">
-                    <div class="feature-icon"><i class="fa-solid fa-user-shield"></i></div>
-                    <h3>3. Privativo &amp; Confidencial</h3>
-                    <p>Seus dados de voz e texto <strong>nunca saem do seu dispositivo</strong>. Perfeito para transcrição de reuniões, pareceres e dados sensíveis com conformidade total de privacidade.</p>
+                    <div class="feature-icon"><i class="fa-solid fa-copy"></i></div>
+                    <h3>3. Cópia &amp; Utilização</h3>
+                    <p>Receba a transcrição pronta na tela para copiar, editar ou integrar diretamente aos seus documentos e peças jurídicas.</p>
                 </div>
             </div>
         </section>
@@ -134,13 +141,13 @@
         </footer>
     </div>
 
-    <!-- Script para copiar transcrição -->
+    <!-- Script auxiliar para copiar -->
     <script>
         function copyTranscription() {
             const output = document.getElementById('transcription-output').innerText;
-            if (output && !output.includes('Clique no botão')) {
+            if (output && !output.includes('O texto transcrito')) {
                 navigator.clipboard.writeText(output);
-                alert('Transcrição copiada com sucesso!');
+                alert('Transcrição copiada para a área de transferência!');
             }
         }
     </script>
