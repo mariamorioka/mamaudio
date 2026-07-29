@@ -2,11 +2,10 @@ import { pipeline } from 'https://cdn.jsdelivr.net/npm/@huggingface/transformers
 
 let transcriber = null;
 
-// Elementos da interface (certifique-se de que os IDs existam no HTML)
 const btnTranscrever = document.getElementById('btn-transcrever');
 const dropzone = document.getElementById('dropzone');
 
-// 1. Carregar o modelo Whisper assim que o site abrir
+// 1. Carregar o modelo Whisper em segundo plano ao abrir o site
 async function carregarModelo() {
     try {
         if (btnTranscrever) {
@@ -14,10 +13,8 @@ async function carregarModelo() {
             btnTranscrever.disabled = true;
         }
 
-        // Usamos o modelo whisper-tiny quantizado para rodar rápido no navegador
-        transcriber = await pipeline('automatic-speech-recognition', 'Xenova/whisper-tiny.en', {
-            // Se quiser suporte a português direto, pode testar modelos multilíngues compatíveis com ONNX
-        });
+        // Carrega o modelo whisper-tiny otimizado para navegador
+        transcriber = await pipeline('automatic-speech-recognition', 'Xenova/whisper-tiny.en');
 
         if (btnTranscrever) {
             btnTranscrever.innerHTML = `<span>INICIAR TRANSCRIÇÃO</span> <i class="fa-solid fa-arrow-right"></i>`;
@@ -32,13 +29,11 @@ async function carregarModelo() {
     }
 }
 
-// Chamar o carregamento ao iniciar a página
 carregarModelo();
 
-// 2. Manipular o arquivo de áudio carregado pelo usuário
+// 2. Manipular o upload do arquivo de áudio
 let arquivoAudioSelecionado = null;
 
-// Criar um input de arquivo invisível para capturar o clique na dropzone
 const fileInput = document.createElement('input');
 fileInput.type = 'file';
 fileInput.accept = 'audio/*';
@@ -53,7 +48,10 @@ fileInput.addEventListener('change', (event) => {
     const file = event.target.files[0];
     if (file) {
         arquivoAudioSelecionado = file;
-        dropzone.querySelector('.dropzone-title').innerHTML = `Arquivo selecionado: <strong>${file.name}</strong>`;
+        const titleEl = dropzone.querySelector('.dropzone-title');
+        if (titleEl) {
+            titleEl.innerHTML = `Arquivo selecionado: <strong>${file.name}</strong>`;
+        }
     }
 });
 
@@ -65,7 +63,7 @@ btnTranscrever.addEventListener('click', async () => {
     }
 
     if (!transcriber) {
-        alert('O modelo de IA ainda está sendo baixado/carregado. Aguarde um momento.');
+        alert('O modelo de IA ainda está carregando. Aguarde um instante.');
         return;
     }
 
@@ -73,23 +71,29 @@ btnTranscrever.addEventListener('click', async () => {
         btnTranscrever.innerHTML = `<span>Transcrevendo áudio...</span> <i class="fa-solid fa-spinner fa-spin"></i>`;
         btnTranscrever.disabled = true;
 
-        // Converter o arquivo de áudio para URL legível pelo navegador
         const audioURL = URL.createObjectURL(arquivoAudioSelecionado);
-
-        // Executar o Whisper localmente
         const resultado = await transcriber(audioURL);
 
-        console.log("Resultado da Transcrição:", resultado);
-        
-        // Exibir o resultado na tela (você pode criar uma caixa de texto no HTML para mostrar isso)
-        alert("Transcrição concluída: " + resultado.text);
+        // Criar ou atualizar a caixa de resultado na tela
+        let resultadoBox = document.getElementById('resultado-transcricao');
+        if (!resultadoBox) {
+            resultadoBox = document.createElement('div');
+            resultadoBox.id = 'resultado-transcricao';
+            resultadoBox.style.cssText = "margin-top: 20px; padding: 20px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; text-align: left;";
+            dropzone.parentNode.appendChild(resultadoBox);
+        }
+
+        resultadoBox.innerHTML = `
+            <h3 style="color: #0f172a; margin-bottom: 10px; font-size: 1.1rem;"><i class="fa-solid fa-file-lines"></i> Resultado da Transcrição:</h3>
+            <p style="color: #334155; line-height: 1.6; font-size: 1rem; white-space: pre-wrap;">${resultado.text}</p>
+        `;
 
         btnTranscrever.innerHTML = `<span>INICIAR TRANSCRIÇÃO</span> <i class="fa-solid fa-arrow-right"></i>`;
         btnTranscrever.disabled = false;
 
     } catch (error) {
         console.error("Erro na transcrição:", error);
-        alert("Ocorreu um erro ao transcrever o áudio.");
+        alert("Ocorreu um erro ao processar o áudio.");
         btnTranscrever.innerHTML = `<span>INICIAR TRANSCRIÇÃO</span> <i class="fa-solid fa-arrow-right"></i>`;
         btnTranscrever.disabled = false;
     }
