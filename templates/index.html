@@ -1,57 +1,406 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-BR" class="scroll-smooth dark">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MamAudio - Transcrição de Áudio Inteligente</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
-    <!-- Ícones Font Awesome para os botões do GitHub e LinkedIn -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title id="metaTitle">MamAudio — Transcrição Inteligente & Processamento Local</title>
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#eff6ff',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            900: '#1e3a8a',
+                            glow: '#60a5fa',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- Google Fonts: Plus Jakarta Sans -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Transformers.js (Whisper AI Local) -->
+    <script type="module">
+        import { pipeline, env } from 'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2';
+        env.allowLocalModels = false;
+        window.pipeline = pipeline;
+    </script>
+
+    <style>
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            background-color: #090d16;
+        }
+        
+        .bg-cyber-grid {
+            background-image: radial-gradient(rgba(59, 130, 246, 0.12) 1px, transparent 1px);
+            background-size: 32px 32px;
+        }
+
+        .glow-effect {
+            box-shadow: 0 0 50px -10px rgba(37, 99, 235, 0.25);
+        }
+
+        .glass-card {
+            background: rgba(15, 23, 42, 0.75);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .glass-card:hover {
+            border-color: rgba(59, 130, 246, 0.4);
+        }
+    </style>
 </head>
-<body>
-    <div class="container">
-        <header>
-            <h1>🎙️ MamAudio</h1>
-            <p>Transcrição de áudio em tempo real com alta privacidade</p>
-        </header>
+<body class="text-slate-200 antialiased min-h-screen flex flex-col justify-between bg-cyber-grid selection:bg-blue-500 selection:text-white">
 
-        <main>
-            <div class="card">
-                <div class="controls">
-                    <button id="btn-record" class="btn btn-primary">
-                        <i class="fa-solid fa-microphone"></i> Iniciar Gravação
-                    </button>
-                    <button id="btn-stop" class="btn btn-danger" disabled>
-                        <i class="fa-solid fa-square"></i> Parar
-                    </button>
+    <!-- EFECTO DE ILUMINAÇÃO DE FUNDO FUTURISTA -->
+    <div class="fixed top-0 left-1/2 -translate-x-1/2 w-[800px] h-[350px] bg-blue-600/15 blur-[120px] pointer-events-none rounded-full"></div>
+
+    <!-- NAVBAR -->
+    <header class="glass-card sticky top-0 z-50 border-b border-slate-800/80">
+        <div class="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-9 h-9 bg-gradient-to-tr from-blue-700 to-blue-500 rounded-xl flex items-center justify-center font-extrabold text-white text-lg shadow-lg shadow-blue-500/30">
+                    M
+                </div>
+                <span class="text-xl font-extrabold tracking-tight text-white">
+                    Mam<span class="text-blue-500">Audio</span>
+                </span>
+            </div>
+            <nav class="flex gap-8 text-sm font-semibold text-slate-400">
+                <a href="#como-funciona" data-i18n="navHow" class="hover:text-blue-400 transition-colors">Como Funciona</a>
+                <a href="#seguranca" data-i18n="navSecurity" class="hover:text-blue-400 transition-colors">Segurança</a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- MAIN CONTAINER -->
+    <main class="max-w-4xl mx-auto px-6 pt-16 pb-24 flex-grow w-full z-10">
+        
+        <!-- HERO HEADLINE -->
+        <div class="text-center space-y-6 mb-12">
+            <h1 data-i18n="heroTitle" class="text-4xl sm:text-6xl font-extrabold text-white tracking-tight leading-[1.15]">
+                Transforme voz em texto <br class="hidden sm:inline">com <span class="bg-gradient-to-r from-blue-400 via-indigo-300 to-blue-600 bg-clip-text text-transparent">precisão de IA</span>
+            </h1>
+            
+            <p data-i18n="heroSubtitle" class="text-base sm:text-lg text-slate-400 max-w-2xl mx-auto leading-relaxed">
+                Uma plataforma de última geração para converter, organizar e estruturar arquivos de áudio com máxima agilidade e privacidade.
+            </p>
+        </div>
+
+        <!-- CARD DE UPLOAD FUTURISTA -->
+        <div class="glass-card rounded-3xl p-6 sm:p-10 glow-effect max-w-2xl mx-auto transition-all">
+            <form id="uploadForm">
+                <div id="dropZone" class="border-2 border-dashed border-slate-700/80 rounded-2xl p-10 text-center bg-slate-900/40 hover:bg-blue-950/20 hover:border-blue-500/60 transition-all cursor-pointer group relative flex flex-col items-center justify-center">
+                    <input type="file" id="audioFile" name="audio" accept="audio/*,.ogg,.opus" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" required>
+                    
+                    <div class="w-16 h-16 bg-slate-800/80 border border-slate-700 rounded-2xl flex items-center justify-center mb-5 shadow-inner group-hover:scale-110 group-hover:border-blue-500/50 group-hover:bg-blue-600/10 transition-all duration-300">
+                        <svg class="w-7 h-7 text-blue-400 group-hover:text-blue-300 transition-colors" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 16.5V9.75m0 0l3 3m-3-3l-3 3M6.75 19.5a4.5 4.5 0 01-1.41-8.775 5.25 5.25 0 0110.233-2.33 3 3 0 013.758 3.848A3.752 3.752 0 0118 19.5H6.75z"/>
+                        </svg>
+                    </div>
+                    
+                    <span id="fileLabel" class="text-base font-bold text-slate-200 mb-1">
+                        <span data-i18n="dropText1">Arraste seu arquivo de áudio ou</span> <span class="text-blue-400 underline decoration-blue-500/40" data-i18n="dropText2">clique para buscar</span>
+                    </span>
+                    <span data-i18n="formatsText" class="text-xs text-slate-500 mt-1">Compatível com MP3, WAV, M4A, OGG e OPUS</span>
                 </div>
 
-                <div id="status" class="status-indicator">
-                    Pronto para gravar...
-                </div>
+                <button type="submit" class="w-full mt-6 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold py-4 px-6 rounded-2xl shadow-lg shadow-blue-600/30 hover:shadow-blue-500/50 transition-all active:scale-[0.99] flex items-center justify-center gap-2 text-sm tracking-wide">
+                    <span data-i18n="btnSubmit">INICIAR TRANSCRIÇÃO</span>
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"/></svg>
+                </button>
+            </form>
 
-                <div class="transcription-container">
-                    <h3>Transcrição:</h3>
-                    <div id="transcription-output" class="output-box">
-                        Clique em "Iniciar Gravação" e fale algo...
+            <!-- LOADER STATE -->
+            <div id="loading" class="hidden text-center py-10 space-y-4">
+                <div class="relative w-10 h-10 mx-auto">
+                    <div class="w-10 h-10 border-4 border-slate-800 border-t-blue-500 rounded-full animate-spin"></div>
+                    <div class="absolute inset-0 w-10 h-10 border-4 border-transparent border-r-indigo-500 rounded-full animate-ping opacity-25"></div>
+                </div>
+                <p id="loadingStatus" data-i18n="loadingInit" class="text-xs font-semibold text-blue-400 tracking-wide">Carregando inteligência artificial...</p>
+            </div>
+
+            <!-- RESULT CONTAINER -->
+            <div id="resultContainer" class="hidden mt-8 pt-6 border-t border-slate-800/80 space-y-4">
+                <div class="flex items-center justify-between">
+                    <span data-i18n="resultTitle" class="text-xs font-bold uppercase tracking-wider text-slate-400">Resultado Transcrito:</span>
+                    <div class="flex gap-2">
+                        <button id="copyBtn" onclick="copyText()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-lg border border-slate-700 transition-all flex items-center gap-1.5">
+                            📋 <span data-i18n="btnCopy">Copiar</span>
+                        </button>
+                        <button id="downloadBtn" onclick="downloadText()" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold rounded-lg transition-all shadow-md shadow-blue-600/20 flex items-center gap-1.5">
+                            📥 <span data-i18n="btnDownload">Baixar .TXT</span>
+                        </button>
                     </div>
                 </div>
+                <textarea id="resultText" class="w-full h-52 p-4 bg-slate-950/80 border border-slate-800 rounded-xl text-sm leading-relaxed text-slate-300 focus:outline-none focus:border-blue-500/50 resize-none font-mono" readonly></textarea>
             </div>
-        </main>
+        </div>
 
-        <footer>
-            <p>Desenvolvido por <strong>Maria Aparecida Morioka</strong></p>
-            <div class="social-links">
-                <a href="https://github.com/mariamorioka" target="_blank" rel="noopener noreferrer" title="GitHub">
-                    <i class="fa-brands fa-github"></i> GitHub
-                </a>
-                <a href="https://www.linkedin.com/in/maria-aparecida-morioka" target="_blank" rel="noopener noreferrer" title="LinkedIn">
-                    <i class="fa-brands fa-linkedin"></i> LinkedIn
-                </a>
+        <!-- RECURSOS / PRODUTIVIDADE -->
+        <div id="como-funciona" class="mt-20 text-center max-w-2xl mx-auto space-y-3">
+            <h2 data-i18n="prodTitle" class="text-xl font-bold text-white tracking-tight">Produtividade de Alta Performance</h2>
+            <p data-i18n="prodDesc" class="text-sm text-slate-400 leading-relaxed">
+                Reúna áudios e transcrições em um fluxo simples, inteligente e totalmente otimizado para tarefas acadêmicas e profissionais.
+            </p>
+        </div>
+    </main>
+
+    <!-- FOOTER MODERNO & PROFISSIONAL -->
+    <footer id="seguranca" class="bg-slate-950 border-t border-slate-900 py-12 text-xs relative z-10">
+        <div class="max-w-6xl mx-auto px-6 grid grid-cols-1 md:grid-cols-4 gap-10 mb-12">
+            
+            <!-- BRAND & RESUMO -->
+            <div class="space-y-3">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-7 h-7 bg-blue-600 rounded-lg flex items-center justify-center font-bold text-white text-xs">M</div>
+                    <span class="text-base font-bold text-white tracking-tight">MamAudio</span>
+                </div>
+                <p data-i18n="footerBrandDesc" class="text-slate-400 leading-relaxed">
+                    Uma plataforma prática para converter, organizar e preparar arquivos de voz com mais agilidade, clareza e qualidade no dia a dia.
+                </p>
             </div>
-        </footer>
-    </div>
 
-    <script src="{{ url_for('static', filename='script.js') }}"></script>
+            <!-- SEGURANÇA E PRIVACIDADE -->
+            <div class="space-y-2">
+                <h4 data-i18n="footerSecTitle" class="font-bold text-white uppercase tracking-wider mb-3 text-[11px]">Segurança & Privacidade</h4>
+                <p class="text-slate-400 leading-relaxed">
+                    <strong data-i18n="footerDataProtStrong" class="text-slate-200">Proteção Local:</strong> <span data-i18n="footerDataProtText">Seus arquivos são processados diretamente no seu dispositivo. Não armazenamos ou compartilhamos dados.</span>
+                </p>
+                <p data-i18n="footerLgpdText" class="text-slate-400 leading-relaxed pt-1">
+                    Em estrita conformidade com a <strong class="text-slate-200">LGPD (Lei Geral de Proteção de Dados)</strong>.
+                </p>
+            </div>
+
+            <!-- EXPLORAR (SEM "Áudio para Texto (.TXT)") -->
+            <div>
+                <h4 data-i18n="footerExploreTitle" class="font-bold text-white uppercase tracking-wider mb-3 text-[11px]">Explorar</h4>
+                <ul class="space-y-2.5">
+                    <li><a href="#" data-i18n="exploreLink2" class="text-slate-400 hover:text-white transition-colors">Política de Privacidade</a></li>
+                    <li><a href="#" data-i18n="exploreLink3" class="text-slate-400 hover:text-white transition-colors">Termos de Serviço</a></li>
+                </ul>
+            </div>
+
+            <!-- CRIAÇÃO & LINKS SOCIAIS -->
+            <div class="space-y-3">
+                <h4 data-i18n="footerCreationTitle" class="font-bold text-white uppercase tracking-wider mb-3 text-[11px]">Desenvolvimento</h4>
+                <p class="text-slate-400">
+                    <span data-i18n="footerDevBy">Projeto idealizado e desenvolvido por:</span><br>
+                    <strong class="text-white text-sm">Maria Aparecida Morioka</strong>
+                </p>
+                
+                <div class="flex flex-wrap gap-2 pt-2">
+                    <a href="https://linkedin.com" target="_blank" rel="noopener" class="px-3 py-1.5 bg-slate-900 hover:bg-blue-600/20 hover:border-blue-500/50 text-slate-300 hover:text-white rounded-lg border border-slate-800 transition-all font-semibold flex items-center gap-1">LinkedIn</a>
+                    <a href="https://github.com" target="_blank" rel="noopener" class="px-3 py-1.5 bg-slate-900 hover:bg-blue-600/20 hover:border-blue-500/50 text-slate-300 hover:text-white rounded-lg border border-slate-800 transition-all font-semibold flex items-center gap-1">GitHub</a>
+                    <a href="https://instagram.com" target="_blank" rel="noopener" class="px-3 py-1.5 bg-slate-900 hover:bg-blue-600/20 hover:border-blue-500/50 text-slate-300 hover:text-white rounded-lg border border-slate-800 transition-all font-semibold flex items-center gap-1">Instagram</a>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- BOTTOM BAR & LANGUAGE SWITCHER -->
+        <div class="max-w-6xl mx-auto px-6 border-t border-slate-900 pt-6 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <p data-i18n="footerRights" class="text-slate-500">&copy; MamAudio 2026 • Todos os direitos reservados.</p>
+            
+            <!-- Seletor de Idioma Profissional -->
+            <div class="flex items-center gap-2 bg-slate-900 px-3 py-1.5 rounded-xl border border-slate-800">
+                <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
+                <select id="langSelect" onchange="switchLanguage(this.value)" class="bg-transparent text-slate-200 text-xs font-semibold focus:outline-none cursor-pointer">
+                    <option value="pt" class="bg-slate-900 text-slate-200">🇧🇷 Português</option>
+                    <option value="en" class="bg-slate-900 text-slate-200">🇺🇸 English</option>
+                </select>
+            </div>
+        </div>
+    </footer>
+
+    <!-- LÓGICA DE TRADUÇÃO E PROCESSAMENTO LOCAL -->
+    <script>
+        const translations = {
+            pt: {
+                metaTitle: "MamAudio — Transcrição Inteligente & Processamento Local",
+                navHow: "Como Funciona",
+                navSecurity: "Segurança",
+                heroTitle: "Transforme voz em texto <br class=\"hidden sm:inline\">com <span class=\"bg-gradient-to-r from-blue-400 via-indigo-300 to-blue-600 bg-clip-text text-transparent\">precisão de IA</span>",
+                heroSubtitle: "Uma plataforma de última geração para converter, organizar e estruturar arquivos de áudio com máxima agilidade e privacidade.",
+                dropText1: "Arraste seu arquivo de áudio ou",
+                dropText2: "clique para buscar",
+                formatsText: "Compatível com MP3, WAV, M4A, OGG e OPUS",
+                btnSubmit: "INICIAR TRANSCRIÇÃO",
+                loadingInit: "Inicializando motor de inteligência artificial...",
+                loadingDecode: "Processando estrutura do áudio...",
+                loadingTranscribe: "Convertendo fala em texto digital...",
+                resultTitle: "Resultado Transcrito:",
+                btnCopy: "Copiar",
+                btnCopied: "✓ Copiado!",
+                btnDownload: "Baixar .TXT",
+                prodTitle: "Produtividade de Alta Performance",
+                prodDesc: "Reúna áudios e transcrições em um fluxo simples, inteligente e totalmente otimizado para tarefas acadêmicas e profissionais.",
+                footerBrandDesc: "Uma plataforma prática para converter, organizar e preparar arquivos de voz com mais agilidade, clareza e qualidade no dia a dia.",
+                footerSecTitle: "Segurança & Privacidade",
+                footerDataProtStrong: "Proteção Local:",
+                footerDataProtText: "Seus arquivos são processados diretamente no seu dispositivo. Não armazenamos ou compartilhamos dados.",
+                footerLgpdText: "Em estrita conformidade com a LGPD (Lei Geral de Proteção de Dados).",
+                footerExploreTitle: "Explorar",
+                exploreLink2: "Política de Privacidade",
+                exploreLink3: "Termos de Serviço",
+                footerCreationTitle: "Desenvolvimento",
+                footerDevBy: "Projeto idealizado e desenvolvido por:",
+                footerRights: "© MamAudio 2026 • Todos os direitos reservados.",
+                noSpeech: "Nenhuma fala perceptível foi identificada no arquivo.",
+                errorMsg: "Falha na leitura do arquivo. Certifique-se de que o áudio não está corrompido."
+            },
+            en: {
+                metaTitle: "MamAudio — Intelligent Transcription & Local Processing",
+                navHow: "How It Works",
+                navSecurity: "Security",
+                heroTitle: "Transform voice into text <br class=\"hidden sm:inline\">with <span class=\"bg-gradient-to-r from-blue-400 via-indigo-300 to-blue-600 bg-clip-text text-transparent\">AI precision</span>",
+                heroSubtitle: "A next-generation platform to convert, organize, and structure audio files with maximum agility and privacy.",
+                dropText1: "Drag your audio file here or",
+                dropText2: "click to browse",
+                formatsText: "Compatible with MP3, WAV, M4A, OGG, and OPUS",
+                btnSubmit: "START TRANSCRIPTION",
+                loadingInit: "Initializing artificial intelligence engine...",
+                loadingDecode: "Processing audio structure...",
+                loadingTranscribe: "Converting speech into digital text...",
+                resultTitle: "Transcribed Result:",
+                btnCopy: "Copy",
+                btnCopied: "✓ Copied!",
+                btnDownload: "Download .TXT",
+                prodTitle: "High-Performance Productivity",
+                prodDesc: "Bring audio and transcriptions together in a simple, intelligent workflow optimized for academic and professional tasks.",
+                footerBrandDesc: "A practical platform to convert, organize, and prepare voice files with greater agility, clarity, and quality in daily life.",
+                footerSecTitle: "Security & Privacy",
+                footerDataProtStrong: "Local Protection:",
+                footerDataProtText: "Your files are processed directly on your device. We do not store or share data.",
+                footerLgpdText: "In strict accordance with data privacy regulations (LGPD/GDPR).",
+                footerExploreTitle: "Explore",
+                exploreLink2: "Privacy Policy",
+                exploreLink3: "Terms of Service",
+                footerCreationTitle: "Development",
+                footerDevBy: "Project designed and developed by:",
+                footerRights: "© MamAudio 2026 • All rights reserved.",
+                noSpeech: "No perceptible speech was identified in the file.",
+                errorMsg: "File reading failed. Please make sure the audio file is valid."
+            }
+        };
+
+        let currentLang = 'pt';
+
+        function switchLanguage(lang) {
+            currentLang = lang;
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (translations[lang][key]) {
+                    el.innerHTML = translations[lang][key];
+                }
+            });
+            document.title = translations[lang].metaTitle;
+        }
+
+        const audioFileInput = document.getElementById('audioFile');
+        const fileLabel = document.getElementById('fileLabel');
+        const uploadForm = document.getElementById('uploadForm');
+        const loading = document.getElementById('loading');
+        const loadingStatus = document.getElementById('loadingStatus');
+        const resultContainer = document.getElementById('resultContainer');
+        const resultText = document.getElementById('resultText');
+
+        let transcriber = null;
+
+        audioFileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                const t1 = currentLang === 'pt' ? 'Arquivo selecionado:' : 'Selected file:';
+                fileLabel.innerHTML = `${t1} <span class="text-blue-400 font-bold">${e.target.files[0].name}</span>`;
+            }
+        });
+
+        async function readAudioData(file) {
+            const arrayBuffer = await file.arrayBuffer();
+            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            
+            const decodedAudio = await audioCtx.decodeAudioData(arrayBuffer);
+            
+            const offlineCtx = new OfflineAudioContext(1, decodedAudio.duration * 16000, 16000);
+            const source = offlineCtx.createBufferSource();
+            source.buffer = decodedAudio;
+            source.connect(offlineCtx.destination);
+            source.start(0);
+
+            const resampledBuffer = await offlineCtx.startRendering();
+            audioCtx.close();
+            
+            return resampledBuffer.getChannelData(0);
+        }
+
+        uploadForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const file = audioFileInput.files[0];
+            if (!file) return;
+
+            loading.classList.remove('hidden');
+            resultContainer.classList.add('hidden');
+            loadingStatus.innerText = translations[currentLang].loadingInit;
+
+            try {
+                if (!transcriber) {
+                    transcriber = await window.pipeline(
+                        'automatic-speech-recognition', 
+                        'Xenova/whisper-tiny'
+                    );
+                }
+
+                loadingStatus.innerText = translations[currentLang].loadingDecode;
+                const pcmFloat32Data = await readAudioData(file);
+
+                loadingStatus.innerText = translations[currentLang].loadingTranscribe;
+                const output = await transcriber(pcmFloat32Data, {
+                    language: currentLang === 'pt' ? 'portuguese' : 'english',
+                    task: 'transcribe'
+                });
+
+                resultText.value = output.text ? output.text.trim() : translations[currentLang].noSpeech;
+
+            } catch (error) {
+                console.error("Erro na transcrição:", error);
+                resultText.value = translations[currentLang].errorMsg;
+            } finally {
+                loading.classList.add('hidden');
+                resultContainer.classList.remove('hidden');
+            }
+        });
+
+        function copyText() {
+            navigator.clipboard.writeText(resultText.value);
+            const copyBtn = document.getElementById('copyBtn');
+            const originalText = copyBtn.innerHTML;
+            copyBtn.innerHTML = `<span>${translations[currentLang].btnCopied}</span>`;
+            setTimeout(() => {
+                copyBtn.innerHTML = originalText;
+            }, 2000);
+        }
+
+        function downloadText() {
+            const blob = new Blob([resultText.value], { type: 'text/plain;charset=utf-8' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'mamaudio_transcricao.txt';
+            a.click();
+        }
+    </script>
 </body>
 </html>
