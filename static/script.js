@@ -1,57 +1,95 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MamAudio - Transcrição de Áudio Inteligente</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
-    <!-- Ícones Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-</head>
-<body>
-    <div class="container">
-        <header>
-            <h1>🎙️ MamAudio</h1>
-            <p>Transcrição de áudio em tempo real com alta privacidade</p>
-        </header>
+window.addEventListener('DOMContentLoaded', () => {
+    const fileInput = document.getElementById('audioFile');
+    const fileNameDisplay = document.getElementById('fileName');
+    const form = document.getElementById('uploadForm');
+    const loading = document.getElementById('loading');
+    const resultContainer = document.getElementById('resultContainer');
+    const resultText = document.getElementById('resultText');
+    const copyBtn = document.getElementById('copyBtn');
+    const downloadBtn = document.getElementById('downloadBtn');
+    const dropZone = document.getElementById('uploadForm');
 
-        <main>
-            <div class="card">
-                <div class="controls">
-                    <button id="btn-record" class="btn btn-primary">
-                        <i class="fa-solid fa-microphone"></i> Iniciar Gravação
-                    </button>
-                    <button id="btn-stop" class="btn btn-danger" disabled>
-                        <i class="fa-solid fa-square"></i> Parar
-                    </button>
-                </div>
+    // Drag and Drop funcional e visual
+    ['dragenter', 'dragover'].forEach(eventName => {
+        dropZone.addEventListener(eventName, (e) => {
+            e.preventDefault();
+            dropZone.classList.add('border-purple-500', 'bg-purple-50/30');
+        }, false);
+    });
 
-                <div id="status" class="status-indicator">
-                    Pronto para gravar...
-                </div>
+    ['dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('border-purple-500', 'bg-purple-50/30');
+        }, false);
+    });
 
-                <div class="transcription-container">
-                    <h3>Transcrição:</h3>
-                    <div id="transcription-output" class="output-box">
-                        Clique em "Iniciar Gravação" e fale algo...
-                    </div>
-                </div>
-            </div>
-        </main>
+    dropZone.addEventListener('drop', (e) => {
+        const dt = e.dataTransfer;
+        if (dt.files.length > 0) {
+            fileInput.files = dt.files;
+            updateFileName(dt.files[0].name);
+        }
+    });
 
-        <footer>
-            <p>Desenvolvido por <strong>Maria Aparecida Morioka</strong></p>
-            <div class="social-links">
-                <a href="https://github.com/mariamorioka/mamaudio" target="_blank" rel="noopener noreferrer" title="GitHub">
-                    <i class="fa-brands fa-github"></i> GitHub
-                </a>
-                <a href="https://www.linkedin.com/in/maria-aparecida-assis-morioka-8361b012a/" target="_blank" rel="noopener noreferrer" title="LinkedIn">
-                    <i class="fa-brands fa-linkedin"></i> LinkedIn
-                </a>
-            </div>
-        </footer>
-    </div>
+    fileInput.addEventListener('change', () => {
+        if (fileInput.files.length > 0) {
+            updateFileName(fileInput.files[0].name);
+        }
+    });
 
-    <script src="{{ url_for('static', filename='script.js') }}"></script>
-</body>
-</html>
+    function updateFileName(name) {
+        fileNameDisplay.textContent = `Arquivo Selecionado: ${name}`;
+        fileNameDisplay.className = "text-sm text-purple-600 font-bold block mt-2";
+    }
+
+    // Comunicação AJAX com o Flask Backend
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        if (fileInput.files.length === 0) return;
+
+        const formData = new FormData();
+        formData.append('audio', fileInput.files[0]);
+
+        loading.classList.remove('hidden');
+        resultContainer.classList.add('hidden');
+
+        try {
+            const response = await fetch('/transcrever', {
+                method: 'POST',
+                body: formData
+            });
+            const data = await response.json();
+
+            if (response.ok) {
+                resultText.value = data.text || "O áudio foi processado com sucesso, mas nenhum texto foi gerado.";
+                resultContainer.classList.remove('hidden');
+                resultContainer.scrollIntoView({ behavior: 'smooth' });
+            } else {
+                alert(data.error || 'Ocorreu um erro ao processar o áudio.');
+            }
+        } catch (error) {
+            alert('Erro ao se conectar ao servidor Python.');
+        } finally {
+            loading.classList.add('hidden');
+        }
+    });
+
+    // Copiar Texto para Área de Transferência
+    copyBtn.addEventListener('click', () => {
+        navigator.clipboard.writeText(resultText.value);
+        copyBtn.textContent = "✅ Copiado!";
+        setTimeout(() => copyBtn.textContent = "📋 Copiar", 2000);
+    });
+
+    // Baixar arquivo de texto compilado .TXT
+    downloadBtn.addEventListener('click', () => {
+        const blob = new Blob([resultText.value], { type: 'text/plain;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'transcricao-mamaudio.txt';
+        a.click();
+        URL.revokeObjectURL(url);
+    });
+});
