@@ -1,95 +1,96 @@
-window.addEventListener('DOMContentLoaded', () => {
-    const fileInput = document.getElementById('audioFile');
-    const fileNameDisplay = document.getElementById('fileName');
-    const form = document.getElementById('uploadForm');
-    const loading = document.getElementById('loading');
-    const resultContainer = document.getElementById('resultContainer');
-    const resultText = document.getElementById('resultText');
-    const copyBtn = document.getElementById('copyBtn');
-    const downloadBtn = document.getElementById('downloadBtn');
-    const dropZone = document.getElementById('uploadForm');
+import { pipeline } from 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.0.0';
 
-    // Drag and Drop funcional e visual
-    ['dragenter', 'dragover'].forEach(eventName => {
-        dropZone.addEventListener(eventName, (e) => {
-            e.preventDefault();
-            dropZone.classList.add('border-purple-500', 'bg-purple-50/30');
-        }, false);
-    });
+let transcriber = null;
 
-    ['dragleave', 'drop'].forEach(eventName => {
-        dropZone.addEventListener(eventName, (e) => {
-            e.preventDefault();
-            dropZone.classList.remove('border-purple-500', 'bg-purple-50/30');
-        }, false);
-    });
+// Elementos da interface (certifique-se de que os IDs existam no HTML)
+const btnTranscrever = document.getElementById('btn-transcrever');
+const dropzone = document.getElementById('dropzone');
 
-    dropZone.addEventListener('drop', (e) => {
-        const dt = e.dataTransfer;
-        if (dt.files.length > 0) {
-            fileInput.files = dt.files;
-            updateFileName(dt.files[0].name);
+// 1. Carregar o modelo Whisper assim que o site abrir
+async function carregarModelo() {
+    try {
+        if (btnTranscrever) {
+            btnTranscrever.innerHTML = `<span>Carregando IA...</span>`;
+            btnTranscrever.disabled = true;
         }
-    });
 
-    fileInput.addEventListener('change', () => {
-        if (fileInput.files.length > 0) {
-            updateFileName(fileInput.files[0].name);
+        // Usamos o modelo whisper-tiny quantizado para rodar rápido no navegador
+        transcriber = await pipeline('automatic-speech-recognition', 'Xenova/whisper-tiny.en', {
+            // Se quiser suporte a português direto, pode testar modelos multilíngues compatíveis com ONNX
+        });
+
+        if (btnTranscrever) {
+            btnTranscrever.innerHTML = `<span>INICIAR TRANSCRIÇÃO</span> <i class="fa-solid fa-arrow-right"></i>`;
+            btnTranscrever.disabled = false;
         }
-    });
+        console.log("Modelo de IA carregado com sucesso no navegador!");
+    } catch (error) {
+        console.error("Erro ao carregar o modelo:", error);
+        if (btnTranscrever) {
+            btnTranscrever.innerHTML = `<span>Erro ao carregar IA</span>`;
+        }
+    }
+}
 
-    function updateFileName(name) {
-        fileNameDisplay.textContent = `Arquivo Selecionado: ${name}`;
-        fileNameDisplay.className = "text-sm text-purple-600 font-bold block mt-2";
+// Chamar o carregamento ao iniciar a página
+carregarModelo();
+
+// 2. Manipular o arquivo de áudio carregado pelo usuário
+let arquivoAudioSelecionado = null;
+
+// Criar um input de arquivo invisível para capturar o clique na dropzone
+const fileInput = document.createElement('input');
+fileInput.type = 'file';
+fileInput.accept = 'audio/*';
+fileInput.style.display = 'none';
+document.body.appendChild(fileInput);
+
+dropzone.addEventListener('click', () => {
+    fileInput.click();
+});
+
+fileInput.addEventListener('change', (event) => {
+    const file = event.target.files[0];
+    if (file) {
+        arquivoAudioSelecionado = file;
+        dropzone.querySelector('.dropzone-title').innerHTML = `Arquivo selecionado: <strong>${file.name}</strong>`;
+    }
+});
+
+// 3. Executar a transcrição ao clicar no botão
+btnTranscrever.addEventListener('click', async () => {
+    if (!arquivoAudioSelecionado) {
+        alert('Por favor, selecione um arquivo de áudio primeiro.');
+        return;
     }
 
-    // Comunicação AJAX com o Flask Backend
-    form.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        if (fileInput.files.length === 0) return;
+    if (!transcriber) {
+        alert('O modelo de IA ainda está sendo baixado/carregado. Aguarde um momento.');
+        return;
+    }
 
-        const formData = new FormData();
-        formData.append('audio', fileInput.files[0]);
+    try {
+        btnTranscrever.innerHTML = `<span>Transcrevendo áudio...</span> <i class="fa-solid fa-spinner fa-spin"></i>`;
+        btnTranscrever.disabled = true;
 
-        loading.classList.remove('hidden');
-        resultContainer.classList.add('hidden');
+        // Converter o arquivo de áudio para URL legível pelo navegador
+        const audioURL = URL.createObjectURL(arquivoAudioSelecionado);
 
-        try {
-            const response = await fetch('/transcrever', {
-                method: 'POST',
-                body: formData
-            });
-            const data = await response.json();
+        // Executar o Whisper localmente
+        const resultado = await transcriber(audioURL);
 
-            if (response.ok) {
-                resultText.value = data.text || "O áudio foi processado com sucesso, mas nenhum texto foi gerado.";
-                resultContainer.classList.remove('hidden');
-                resultContainer.scrollIntoView({ behavior: 'smooth' });
-            } else {
-                alert(data.error || 'Ocorreu um erro ao processar o áudio.');
-            }
-        } catch (error) {
-            alert('Erro ao se conectar ao servidor Python.');
-        } finally {
-            loading.classList.add('hidden');
-        }
-    });
+        console.log("Resultado da Transcrição:", resultado);
+        
+        // Exibir o resultado na tela (você pode criar uma caixa de texto no HTML para mostrar isso)
+        alert("Transcrição concluída: " + resultado.text);
 
-    // Copiar Texto para Área de Transferência
-    copyBtn.addEventListener('click', () => {
-        navigator.clipboard.writeText(resultText.value);
-        copyBtn.textContent = "✅ Copiado!";
-        setTimeout(() => copyBtn.textContent = "📋 Copiar", 2000);
-    });
+        btnTranscrever.innerHTML = `<span>INICIAR TRANSCRIÇÃO</span> <i class="fa-solid fa-arrow-right"></i>`;
+        btnTranscrever.disabled = false;
 
-    // Baixar arquivo de texto compilado .TXT
-    downloadBtn.addEventListener('click', () => {
-        const blob = new Blob([resultText.value], { type: 'text/plain;charset=utf-8' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'transcricao-mamaudio.txt';
-        a.click();
-        URL.revokeObjectURL(url);
-    });
+    } catch (error) {
+        console.error("Erro na transcrição:", error);
+        alert("Ocorreu um erro ao transcrever o áudio.");
+        btnTranscrever.innerHTML = `<span>INICIAR TRANSCRIÇÃO</span> <i class="fa-solid fa-arrow-right"></i>`;
+        btnTranscrever.disabled = false;
+    }
 });
