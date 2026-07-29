@@ -4,17 +4,46 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MamAudio - Transcrição de Áudio Inteligente</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+
+    <!-- Google Fonts: Inter & JetBrains Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
     <!-- Ícones Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
 <body>
+    <div class="bg-glow bg-glow-1"></div>
+    <div class="bg-glow bg-glow-2"></div>
+    <div class="bg-grid"></div>
+
     <div class="container">
+        <!-- BARRA DE NAVEGAÇÃO -->
+        <nav class="navbar">
+            <div class="brand">
+                <span class="brand-icon"><i class="fa-solid fa-wave-square"></i></span>
+                <span class="brand-name">Mam<span class="highlight">Audio</span></span>
+                <span class="badge-tech">v2.0 High Performance</span>
+            </div>
+            <div class="nav-links">
+                <a href="#como-funciona" class="nav-item">Como Funciona</a>
+                <a href="https://github.com/mariamorioka/mamaudio" target="_blank" rel="noopener noreferrer" class="nav-item">
+                    <i class="fa-brands fa-github"></i> GitHub
+                </a>
+            </div>
+        </nav>
+
+        <!-- CABEÇALHO HERO -->
         <header>
-            <h1>🎙️ MamAudio</h1>
-            <p>Transcrição de áudio em tempo real com alta privacidade</p>
+            <h1 class="hero-title">🎙️ MamAudio</h1>
+            <p class="hero-subtitle">Transcrição de áudio em tempo real com alta privacidade e precisão</p>
         </header>
 
+        <!-- CONTEÚDO PRINCIPAL (MANTENDO SUA ESTRUTURA ORIGINAL) -->
         <main>
             <div class="card">
                 <div class="controls">
@@ -27,11 +56,17 @@
                 </div>
 
                 <div id="status" class="status-indicator">
-                    Pronto para gravar...
+                    <span class="status-dot"></span>
+                    <span class="status-text">Pronto para gravar...</span>
                 </div>
 
                 <div class="transcription-container">
-                    <h3>Transcrição:</h3>
+                    <div class="workspace-header">
+                        <h3><i class="fa-solid fa-terminal"></i> Transcrição:</h3>
+                        <button id="btn-copy" class="btn-icon" title="Copiar texto" onclick="copyTranscription()">
+                            <i class="fa-regular fa-copy"></i> Copiar
+                        </button>
+                    </div>
                     <div id="transcription-output" class="output-box">
                         Clique em "Iniciar Gravação" e fale algo...
                     </div>
@@ -39,6 +74,36 @@
             </div>
         </main>
 
+        <!-- SEÇÃO COMO FUNCIONA (#como-funciona) -->
+        <section id="como-funciona" class="how-it-works-section">
+            <div class="section-header">
+                <span class="section-tag">ARQUITETURA &amp; PERFORMANCE</span>
+                <h2>Como Funciona o MamAudio?</h2>
+                <p>Nossa plataforma foi projetada com arquitetura moderna e foco em privacidade e alta fidelidade de processamento de áudio.</p>
+            </div>
+
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon"><i class="fa-solid fa-microphone-lines"></i></div>
+                    <h3>1. Captura Instantânea</h3>
+                    <p>O áudio é capturado diretamente do microfone com cancelamento de ruído e baixíssima latência.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon"><i class="fa-solid fa-microchip"></i></div>
+                    <h3>2. Processamento Inteligente</h3>
+                    <p>Algoritmos neurais de reconhecimento de fala transcrevem sua voz em texto formatado com velocidade extrema.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon"><i class="fa-solid fa-user-shield"></i></div>
+                    <h3>3. Segurança &amp; Privacidade</h3>
+                    <p>Ideal para transcrição de reuniões, depoimentos e peças jurídicas com total integridade dos dados.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- RODAPÉ FUTURISTA (SEM INSTAGRAM) -->
         <footer>
             <p>Desenvolvido por <strong>Maria Aparecida Morioka</strong></p>
             <div class="social-links">
@@ -52,6 +117,16 @@
         </footer>
     </div>
 
+    <!-- Script de cópia rápida -->
+    <script>
+        function copyTranscription() {
+            const output = document.getElementById('transcription-output').innerText;
+            if (output && !output.includes('Clique em')) {
+                navigator.clipboard.writeText(output);
+                alert('Transcrição copiada com sucesso!');
+            }
+        }
+    </script>
     <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 </html>
