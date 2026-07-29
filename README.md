@@ -11,7 +11,7 @@
 
 ## 📌 Sobre o Projeto
 
-O **MamAudio** é uma solução web moderna, privativa e intuitiva desenvolvida para converter arquivos de áudio em texto de forma rápida e precisa. Pensado para simplificar a rotina de profissionais que lidam com registros em áudio — como audiências, reuniões, entrevistas ou notas de voz —, o sistema permite o envio direto de arquivos com transcrição instantânea no navegador.
+O **MamAudio** é uma solução web moderna, privativa e intuitiva desenvolvida para converter arquivos de áudio em texto de forma rápida e precisa. Pensado para simplificar a rotina de profissionais que lidam com registros em áudio como audiências, reuniões, entrevistas ou notas de voz, o sistema permite o envio direto de arquivos com transcrição instantânea no navegador.
 
 ---
 
