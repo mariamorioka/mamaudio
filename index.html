@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>MamAudio — Transcrição de Áudio Inteligente</title>
+  <!-- Link direto para o CSS na mesma pasta -->
   <link rel="stylesheet" href="styles.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -47,10 +48,23 @@
           <p class="dropzone-title">Arraste seu arquivo de áudio ou <span class="highlight-link">clique para buscar</span></p>
           <p class="dropzone-subtitle">Compatível com MP3, WAV, M4A, OGG e OPUS</p>
         </div>
-        <button class="btn-primary" id="btn-transcrever">
-          <span>INICIAR TRANSCRIÇÃO</span>
-          <i class="fa-solid fa-arrow-right"></i>
+        <!-- Área onde a IA vai mostrar o status e o resultado -->
+        <div id="status-ia" style="margin-top: 15px; font-weight: 500; color: #4a5568; text-align: center;"></div>
+        
+        <button class="btn-primary" id="btn-transcrever" disabled>
+          <span>AGUARDE, CARREGANDO IA...</span>
         </button>
+      </div>
+      
+      <!-- Área do Resultado (Ficará escondida até ter texto) -->
+      <div id="resultado-container" class="resultado-container" style="display: none;">
+        <div class="resultado-header">
+          <h3><i class="fa-solid fa-file-lines"></i> Resultado da Transcrição</h3>
+          <button id="btn-copiar" class="btn-secundario"><i class="fa-regular fa-copy"></i> Copiar</button>
+        </div>
+        <div id="resultado-transcricao" class="resultado-texto">
+          <!-- O texto da IA aparecerá aqui -->
+        </div>
       </div>
 
       <!-- BANNER DE PRODUTIVIDADE -->
@@ -62,68 +76,14 @@
     </div>
   </main>
 
-  <!-- FOOTER -->
+  <!-- FOOTER (simplificado para teste) -->
   <footer class="footer" id="seguranca">
-    <div class="container footer-grid">
-      <!-- COLUNA 1: BRAND -->
-      <div class="footer-col">
-        <div class="logo logo-footer">
-          <span class="logo-icon">M</span>
-          <span class="logo-text">MamAudio</span>
-        </div>
-        <p class="brand-desc">
-          Uma plataforma prática para converter, organizar e preparar arquivos de voz com mais agilidade, clareza e qualidade no dia a dia.
-        </p>
+      <div class="container footer-bottom">
+        <p>&copy; MamAudio 2026 • Processamento Local e Privado.</p>
       </div>
-
-      <!-- COLUNA 2: SEGURANÇA -->
-      <div class="footer-col">
-        <h4 class="col-title">SEGURANÇA & PRIVACIDADE</h4>
-        <p class="footer-text">
-          <strong>Proteção Local:</strong> Seus arquivos são processados diretamente no seu dispositivo. Não armazenamos ou compartilhamos dados.
-        </p>
-        <p class="footer-text sub-text">
-          Em estrita conformidade com a LGPD (Lei Geral de Proteção de Dados).
-        </p>
-      </div>
-
-      <!-- COLUNA 3: EXPLORAR -->
-      <div class="footer-col">
-        <h4 class="col-title">EXPLORAR</h4>
-        <ul class="footer-links">
-          <li><a href="#">Política de Privacidade</a></li>
-          <li><a href="#">Termos de Serviço</a></li>
-        </ul>
-      </div>
-
-      <!-- COLUNA 4: DESENVOLVIMENTO -->
-      <div class="footer-col">
-        <h4 class="col-title">DESENVOLVIMENTO</h4>
-        <p class="footer-text">Projeto idealizado e desenvolvido por:</p>
-        <p class="author-name">Maria Aparecida Morioka</p>
-        <div class="social-buttons">
-          <a href="https://www.linkedin.com/in/maria-aparecida-assis-morioka-8361b012a/" target="_blank" class="btn-social">
-            <i class="fa-brands fa-linkedin"></i> LinkedIn
-          </a>
-          <a href="https://github.com/mariamorioka" target="_blank" class="btn-social">
-            <i class="fa-brands fa-github"></i> GitHub
-          </a>
-        </div>
-      </div>
-    </div>
-
-    <!-- RODAPÉ INFERIOR -->
-    <div class="container footer-bottom">
-      <p>&copy; MamAudio 2026 • Todos os direitos reservados.</p>
-      <div class="lang-select">
-        <i class="fa-solid fa-globe"></i>
-        <span>BR Português</span>
-        <i class="fa-solid fa-chevron-down"></i>
-      </div>
-    </div>
   </footer>
 
-  <!-- SCRIPT DE IA NO NAVEGADOR -->
+  <!-- SCRIPT DE IA -->
   <script type="module" src="script.js"></script>
 
 </body>

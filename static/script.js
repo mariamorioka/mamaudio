@@ -4,97 +4,105 @@ let transcriber = null;
 
 const btnTranscrever = document.getElementById('btn-transcrever');
 const dropzone = document.getElementById('dropzone');
+const statusIA = document.getElementById('status-ia');
+const resultadoContainer = document.getElementById('resultado-container');
+const resultadoTexto = document.getElementById('resultado-transcricao');
+const btnCopiar = document.getElementById('btn-copiar');
 
-// 1. Carregar o modelo Whisper em segundo plano ao abrir o site
+// 1. Carregar o modelo Whisper
 async function carregarModelo() {
     try {
+        if (statusIA) statusIA.innerText = "O navegador está baixando a Inteligência Artificial (isso ocorre apenas na primeira vez). Aguarde...";
         if (btnTranscrever) {
-            btnTranscrever.innerHTML = `<span>Carregando IA...</span>`;
+            btnTranscrever.innerText = "CARREGANDO IA...";
             btnTranscrever.disabled = true;
         }
 
-        // Carrega o modelo whisper-tiny otimizado para navegador
-        transcriber = await pipeline('automatic-speech-recognition', 'Xenova/whisper-tiny.en');
+        // Usamos o modelo whisper-tiny otimizado para navegador
+        transcriber = await pipeline('automatic-speech-recognition', 'Xenova/whisper-tiny.en', {
+            device: 'wasm' // Força o uso de WebAssembly para compatibilidade
+        });
 
+        if (statusIA) statusIA.innerText = "IA carregada e pronta! Selecione o áudio.";
         if (btnTranscrever) {
             btnTranscrever.innerHTML = `<span>INICIAR TRANSCRIÇÃO</span> <i class="fa-solid fa-arrow-right"></i>`;
             btnTranscrever.disabled = false;
         }
-        console.log("Modelo de IA carregado com sucesso no navegador!");
+        console.log("Whisper carregado com sucesso.");
     } catch (error) {
-        console.error("Erro ao carregar o modelo:", error);
-        if (btnTranscrever) {
-            btnTranscrever.innerHTML = `<span>Erro ao carregar IA</span>`;
-        }
+        console.error("Erro ao carregar:", error);
+        if (statusIA) statusIA.innerText = "Erro ao carregar IA. Verifique sua conexão.";
     }
 }
 
 carregarModelo();
 
-// 2. Manipular o upload do arquivo de áudio
+// 2. Upload de arquivo
 let arquivoAudioSelecionado = null;
-
 const fileInput = document.createElement('input');
 fileInput.type = 'file';
-fileInput.accept = 'audio/*';
+fileInput.accept = 'audio/*,video/*'; // Aceita áudio e vídeo
 fileInput.style.display = 'none';
 document.body.appendChild(fileInput);
 
-dropzone.addEventListener('click', () => {
-    fileInput.click();
-});
+dropzone.addEventListener('click', () => fileInput.click());
 
 fileInput.addEventListener('change', (event) => {
     const file = event.target.files[0];
     if (file) {
         arquivoAudioSelecionado = file;
-        const titleEl = dropzone.querySelector('.dropzone-title');
-        if (titleEl) {
-            titleEl.innerHTML = `Arquivo selecionado: <strong>${file.name}</strong>`;
-        }
+        dropzone.querySelector('.dropzone-title').innerHTML = `Arquivo: <strong>${file.name}</strong>`;
+        dropzone.classList.add('arquivo-carregado');
+        resultadoContainer.style.display = 'none'; // Esconder resultado anterior
+        if (statusIA) statusIA.innerText = "Arquivo pronto para transcrição.";
     }
 });
 
-// 3. Executar a transcrição ao clicar no botão
+// 3. Transcrição
 btnTranscrever.addEventListener('click', async () => {
-    if (!arquivoAudioSelecionado) {
-        alert('Por favor, selecione um arquivo de áudio primeiro.');
-        return;
-    }
-
-    if (!transcriber) {
-        alert('O modelo de IA ainda está carregando. Aguarde um instante.');
-        return;
-    }
+    if (!arquivoAudioSelecionado || !transcriber) return;
 
     try {
-        btnTranscrever.innerHTML = `<span>Transcrevendo áudio...</span> <i class="fa-solid fa-spinner fa-spin"></i>`;
+        btnTranscrever.innerHTML = `<span>Processando...</span> <i class="fa-solid fa-spinner fa-spin"></i>`;
         btnTranscrever.disabled = true;
+        if (statusIA) statusIA.innerText = "IA analisando o áudio... (pode demorar um pouco, aguarde)";
 
         const audioURL = URL.createObjectURL(arquivoAudioSelecionado);
+        
+        // Executar Whisper localmente
         const resultado = await transcriber(audioURL);
 
-        // Criar ou atualizar a caixa de resultado na tela
-        let resultadoBox = document.getElementById('resultado-transcricao');
-        if (!resultadoBox) {
-            resultadoBox = document.createElement('div');
-            resultadoBox.id = 'resultado-transcricao';
-            resultadoBox.style.cssText = "margin-top: 20px; padding: 20px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; text-align: left;";
-            dropzone.parentNode.appendChild(resultadoBox);
-        }
-
-        resultadoBox.innerHTML = `
-            <h3 style="color: #0f172a; margin-bottom: 10px; font-size: 1.1rem;"><i class="fa-solid fa-file-lines"></i> Resultado da Transcrição:</h3>
-            <p style="color: #334155; line-height: 1.6; font-size: 1rem; white-space: pre-wrap;">${resultado.text}</p>
-        `;
-
+        // Exibir resultado
+        resultadoTexto.innerText = resultado.text;
+        resultadoContainer.style.display = 'block';
+        
+        // Resetar interface
         btnTranscrever.innerHTML = `<span>INICIAR TRANSCRIÇÃO</span> <i class="fa-solid fa-arrow-right"></i>`;
         btnTranscrever.disabled = false;
+        if (statusIA) statusIA.innerText = "Transcrição concluída!";
+        
+        // Scroll para o resultado
+        resultadoContainer.scrollIntoView({ behavior: 'smooth' });
 
     } catch (error) {
         console.error("Erro na transcrição:", error);
-        alert("Ocorreu um erro ao processar o áudio.");
+        alert("Ocorreu um erro ao processar o áudio. Tente um arquivo menor ou diferente.");
         btnTranscrever.innerHTML = `<span>INICIAR TRANSCRIÇÃO</span> <i class="fa-solid fa-arrow-right"></i>`;
         btnTranscrever.disabled = false;
     }
+});
+
+// 4. Botão de copiar
+btnCopiar.addEventListener('click', () => {
+    navigator.clipboard.writeText(resultadoTexto.innerText).then(() => {
+        const icone = btnCopiar.querySelector('i');
+        icone.classList.remove('fa-regular', 'fa-copy');
+        icone.classList.add('fa-solid', 'fa-check');
+        btnCopiar.innerText = "Copiado!";
+        setTimeout(() => {
+            btnCopiar.innerHTML = `<i class="fa-regular fa-copy"></i> Copiar`;
+            icone.classList.remove('fa-solid', 'fa-check');
+            icone.classList.add('fa-regular', 'fa-copy');
+        }, 2000);
+    });
 });
