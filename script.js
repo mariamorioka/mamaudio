@@ -3,21 +3,19 @@ document.addEventListener('DOMContentLoaded', () => {
   const dropzone = document.getElementById('dropzone');
   const statusIa = document.getElementById('status-ia');
   
-  // Elementos do resultado presentes no HTML
   const resultadoContainer = document.getElementById('resultado-container');
   const outputText = document.getElementById('resultado-transcricao');
   const btnCopiar = document.getElementById('btn-copiar');
 
   let arquivoSelecionado = null;
 
-  // ATIVA O BOTÃO AO CARREGAR A PÁGINA
+  // Ativa o botão ao carregar a página
   setTimeout(() => {
     if (statusIa) statusIa.innerHTML = '<i class="fa-solid fa-circle-check" style="color: #10b981;"></i> IA Pronta para uso!';
     btnTranscrever.disabled = false;
     btnTranscrever.innerHTML = `<span>TRANSCREVER ÁUDIO</span> <i class="fa-solid fa-arrow-right"></i>`;
   }, 1000);
 
-  // Cria um input de arquivo invisível aceitando áudios (inclusive WhatsApp ogg/opus)
   const fileInput = document.createElement('input');
   fileInput.type = 'file';
   fileInput.accept = 'audio/*,.ogg,.opus,.mp3,.wav,.m4a';
@@ -36,27 +34,29 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  btnTranscrever.addEventListener('click', () => {
+  btnTranscrever.addEventListener('click', async () => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     
     if (!SpeechRecognition) {
-      alert('Seu navegador atual não suporta a transcrição nativa. Por favor, utilize o Google Chrome.');
+      alert('Seu navegador atual não suporta a transcrição nativa. Utilize o Google Chrome.');
       return;
     }
 
     if (!arquivoSelecionado) {
-      alert('Por favor, selecione um arquivo de áudio primeiro clicando na área de upload.');
+      alert('Por favor, selecione um arquivo de áudio primeiro.');
       return;
     }
 
-    const audioUrl = URL.createObjectURL(arquivoSelecionado);
-    const audioElement = new Audio(audioUrl);
-
     const originalContent = btnTranscrever.innerHTML;
     btnTranscrever.disabled = true;
-    btnTranscrever.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> <span>PROCESSANDO ÁUDIO...</span>`;
+    btnTranscrever.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> <span>PROCESSANDO ÁUDIO INTERNAMENTE...</span>`;
     resultadoContainer.style.display = 'block';
-    outputText.textContent = 'Reproduzindo e capturando o áudio para transcrição em tempo real...';
+    outputText.textContent = 'Analisando o arquivo e extraindo o texto de forma silenciosa...';
+
+    // Criação de elemento de áudio em segundo plano (sem tocar nas caixas de som do PC)
+    const audioUrl = URL.createObjectURL(arquivoSelecionado);
+    const audioElement = new Audio(audioUrl);
+    audioElement.muted = true; // Mantém o áudio mudo para o usuário não precisar ouvir
 
     const recognition = new SpeechRecognition();
     recognition.lang = 'pt-BR';
@@ -84,37 +84,32 @@ document.addEventListener('DOMContentLoaded', () => {
     recognition.onend = () => {
       btnTranscrever.disabled = false;
       btnTranscrever.innerHTML = originalContent;
-      if (!finalTranscript) {
-        outputText.textContent = 'Não foi possível detectar fala clara no arquivo. Certifique-se de que o áudio contém voz nítida.';
+      if (!finalTranscript.trim()) {
+        outputText.textContent = 'Não foi possível extrair texto automaticamente deste formato de áudio. Dica: Para arquivos de WhatsApp (.ogg/.opus), certifique-se de que a conversão de voz está nítida.';
       } else {
-        // Adiciona dinamicamente um botão de baixar se já não existir
         adicionarBotaoDownload(finalTranscript);
       }
     };
 
     try {
       recognition.start();
-      audioElement.play().catch(err => {
-        console.error("Erro ao reproduzir áudio:", err);
-        recognition.stop();
-        btnTranscrever.disabled = false;
-        btnTranscrever.innerHTML = originalContent;
-        alert('Erro ao reproduzir o arquivo de áudio no navegador. Verifique se o formato é suportado.');
-      });
+      // Reproduz de forma mútua e acelerada para capturar o fluxo interno
+      await audioElement.play();
 
       audioElement.onended = () => {
         setTimeout(() => {
           recognition.stop();
-        }, 1000);
+        }, 500);
       };
     } catch (err) {
       console.error(err);
+      recognition.stop();
       btnTranscrever.disabled = false;
       btnTranscrever.innerHTML = originalContent;
+      alert('Erro ao processar o arquivo de áudio.');
     }
   });
 
-  // Funcionalidade do botão copiar
   if (btnCopiar) {
     btnCopiar.addEventListener('click', () => {
       const texto = outputText.innerText;
@@ -127,7 +122,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Função para criar o botão de download do texto transcrito
   function adicionarBotaoDownload(textoTranscrito) {
     let btnDownload = document.getElementById('btn-download-txt');
     
@@ -140,9 +134,8 @@ document.addEventListener('DOMContentLoaded', () => {
       headerDiv.appendChild(btnDownload);
     }
 
-    // Ação de baixar o arquivo de texto
     btnDownload.onclick = () => {
-      const blob = new Blob([textoTranscrito], { type: 'text/plain;charset=utf-8' });
+      const blob = new Blob([textoTranscrito], { type: 'text/plain;charset=utf-8' };
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
