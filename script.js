@@ -1,24 +1,28 @@
 document.addEventListener('DOMContentLoaded', () => {
   const btnTranscrever = document.getElementById('btn-transcrever');
   const dropzone = document.getElementById('dropzone');
+  const statusIa = document.getElementById('status-ia');
+  
+  // Elementos do resultado presentes no HTML
+  const resultadoContainer = document.getElementById('resultado-container');
+  const outputText = document.getElementById('resultado-transcricao');
+  const btnCopiar = document.getElementById('btn-copiar');
 
-  // Cria um input de arquivo invisível
+  let arquivoSelecionado = null;
+
+  // ATIVA O BOTÃO AO CARREGAR A PÁGINA
+  setTimeout(() => {
+    if (statusIa) statusIa.innerHTML = '<i class="fa-solid fa-circle-check" style="color: #10b981;"></i> IA Pronta para uso!';
+    btnTranscrever.disabled = false;
+    btnTranscrever.innerHTML = `<span>TRANSCREVER ÁUDIO</span> <i class="fa-solid fa-arrow-right"></i>`;
+  }, 1000);
+
+  // Cria um input de arquivo invisível aceitando áudios (inclusive WhatsApp ogg/opus)
   const fileInput = document.createElement('input');
   fileInput.type = 'file';
-  fileInput.accept = 'audio/*';
+  fileInput.accept = 'audio/*,.ogg,.opus,.mp3,.wav,.m4a';
   fileInput.style.display = 'none';
   document.body.appendChild(fileInput);
-
-  // Cria dinamicamente uma área para exibir o resultado da transcrição na tela
-  const mainContainer = document.querySelector('.hero-container');
-  const resultBox = document.createElement('div');
-  resultBox.style.cssText = 'margin-top: 30px; background: #1e1e2f; padding: 20px; border-radius: 12px; border: 1px solid #333; display: none;';
-  resultBox.innerHTML = `
-    <h3 style="color: #fff; margin-bottom: 10px; font-size: 1.1rem;">Texto Transcrito:</h3>
-    <p id="transcript-output" style="color: #bbb; line-height: 1.6; white-space: pre-wrap;"></p>
-  `;
-  mainContainer.appendChild(resultBox);
-  const outputText = document.getElementById('transcript-output');
 
   dropzone.addEventListener('click', () => {
     fileInput.click();
@@ -26,33 +30,32 @@ document.addEventListener('DOMContentLoaded', () => {
 
   fileInput.addEventListener('change', (e) => {
     if (e.target.files.length > 0) {
-      const fileName = e.target.files[0].name;
+      arquivoSelecionado = e.target.files[0];
+      const fileName = arquivoSelecionado.name;
       dropzone.querySelector('.dropzone-title').innerHTML = `Arquivo selecionado: <span class="highlight-link">${fileName}</span>`;
     }
   });
 
   btnTranscrever.addEventListener('click', () => {
-    // Verifica se o navegador suporta a API de reconhecimento de voz
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     
     if (!SpeechRecognition) {
-      alert('Seu navegador atual não suporta a transcrição nativa. Por favor, tente utilizar o Google Chrome.');
+      alert('Seu navegador atual não suporta a transcrição nativa. Por favor, utilize o Google Chrome.');
       return;
     }
 
-    if (fileInput.files.length === 0) {
+    if (!arquivoSelecionado) {
       alert('Por favor, selecione um arquivo de áudio primeiro clicando na área de upload.');
       return;
     }
 
-    const audioFile = fileInput.files[0];
-    const audioUrl = URL.createObjectURL(audioFile);
+    const audioUrl = URL.createObjectURL(arquivoSelecionado);
     const audioElement = new Audio(audioUrl);
 
     const originalContent = btnTranscrever.innerHTML;
     btnTranscrever.disabled = true;
     btnTranscrever.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> <span>PROCESSANDO ÁUDIO...</span>`;
-    resultBox.style.display = 'block';
+    resultadoContainer.style.display = 'block';
     outputText.textContent = 'Reproduzindo e capturando o áudio para transcrição em tempo real...';
 
     const recognition = new SpeechRecognition();
@@ -83,10 +86,12 @@ document.addEventListener('DOMContentLoaded', () => {
       btnTranscrever.innerHTML = originalContent;
       if (!finalTranscript) {
         outputText.textContent = 'Não foi possível detectar fala clara no arquivo. Certifique-se de que o áudio contém voz nítida.';
+      } else {
+        // Adiciona dinamicamente um botão de baixar se já não existir
+        adicionarBotaoDownload(finalTranscript);
       }
     };
 
-    // Inicia a escuta e reproduz o áudio simultaneamente para o navegador capturar
     try {
       recognition.start();
       audioElement.play().catch(err => {
@@ -94,7 +99,7 @@ document.addEventListener('DOMContentLoaded', () => {
         recognition.stop();
         btnTranscrever.disabled = false;
         btnTranscrever.innerHTML = originalContent;
-        alert('Erro ao reproduzir o arquivo de áudio no navegador.');
+        alert('Erro ao reproduzir o arquivo de áudio no navegador. Verifique se o formato é suportado.');
       });
 
       audioElement.onended = () => {
@@ -108,4 +113,44 @@ document.addEventListener('DOMContentLoaded', () => {
       btnTranscrever.innerHTML = originalContent;
     }
   });
+
+  // Funcionalidade do botão copiar
+  if (btnCopiar) {
+    btnCopiar.addEventListener('click', () => {
+      const texto = outputText.innerText;
+      navigator.clipboard.writeText(texto).then(() => {
+        btnCopiar.innerHTML = '<i class="fa-solid fa-check"></i> Copiado!';
+        setTimeout(() => {
+          btnCopiar.innerHTML = '<i class="fa-regular fa-copy"></i> Copiar';
+        }, 2000);
+      });
+    });
+  }
+
+  // Função para criar o botão de download do texto transcrito
+  function adicionarBotaoDownload(textoTranscrito) {
+    let btnDownload = document.getElementById('btn-download-txt');
+    
+    if (!btnDownload) {
+      const headerDiv = resultadoContainer.querySelector('div');
+      btnDownload = document.createElement('button');
+      btnDownload.id = 'btn-download-txt';
+      btnDownload.style.cssText = 'background: #10b981; border: none; color: #fff; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.85rem; margin-left: 8px;';
+      btnDownload.innerHTML = `<i class="fa-solid fa-download"></i> Baixar TXT`;
+      headerDiv.appendChild(btnDownload);
+    }
+
+    // Ação de baixar o arquivo de texto
+    btnDownload.onclick = () => {
+      const blob = new Blob([textoTranscrito], { type: 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'transcricao-mamaudio.txt';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    };
+  }
 });
