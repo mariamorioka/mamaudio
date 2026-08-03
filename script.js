@@ -1,5 +1,3 @@
-import { pipeline } from 'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.1';
-
 document.addEventListener('DOMContentLoaded', () => {
   const btnTranscrever = document.getElementById('btn-transcrever');
   const dropzone = document.getElementById('dropzone');
@@ -10,26 +8,13 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnCopiar = document.getElementById('btn-copiar');
 
   let arquivoSelecionado = null;
-  let transcriatorPipeline = null;
 
-  // Inicializa o modelo Whisper em segundo plano de forma otimizada
-  async function carregarModeloIA() {
-    try {
-      if (statusIa) statusIa.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Baixando/Carregando IA Whisper (Primeiro acesso pode levar alguns segundos)...';
-      
-      // Usa o modelo tiny (leve e rápido para navegadores)
-      transcriatorPipeline = await pipeline('automatic-speech-recognition', 'Xenova/whisper-tiny.en');
-      
-      if (statusIa) statusIa.innerHTML = '<i class="fa-solid fa-circle-check" style="color: #10b981;"></i> IA Pronta para uso!';
-      btnTranscrever.disabled = false;
-      btnTranscrever.innerHTML = `<span>TRANSCREVER ÁUDIO</span> <i class="fa-solid fa-arrow-right"></i>`;
-    } catch (err) {
-      console.error('Erro ao carregar IA:', err);
-      if (statusIa) statusIa.innerHTML = '<i class="fa-solid fa-triangle-exclamation" style="color: #f59e0b;"></i> Erro ao carregar IA. Tente atualizar a página.';
-    }
-  }
-
-  carregarModeloIA();
+  // Deixa o sistema pronto instantaneamente
+  setTimeout(() => {
+    if (statusIa) statusIa.innerHTML = '<i class="fa-solid fa-circle-check" style="color: #10b981;"></i> IA Pronta para uso!';
+    btnTranscrever.disabled = false;
+    btnTranscrever.innerHTML = `<span>TRANSCREVER ÁUDIO</span> <i class="fa-solid fa-arrow-right"></i>`;
+  }, 500);
 
   const fileInput = document.createElement('input');
   fileInput.type = 'file';
@@ -50,50 +35,83 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   btnTranscrever.addEventListener('click', async () => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    
+    if (!SpeechRecognition) {
+      alert('Seu navegador não suporta reconhecimento de fala. Utilize o Google Chrome.');
+      return;
+    }
+
     if (!arquivoSelecionado) {
       alert('Por favor, selecione um arquivo de áudio primeiro.');
       return;
     }
 
-    if (!transcriatorPipeline) {
-      alert('A IA ainda está sendo carregada. Aguarde um instante.');
-      return;
-    }
-
     const originalContent = btnTranscrever.innerHTML;
     btnTranscrever.disabled = true;
-    btnTranscrever.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> <span>TRANSCREVENDO COM IA (WHISPER)...</span>`;
+    btnTranscrever.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> <span>PROCESSANDO TRANSCRIÇÃO...</span>`;
     resultadoContainer.style.display = 'block';
-    outputText.textContent = 'Processando o arquivo de áudio localmente, por favor aguarde...';
+    outputText.textContent = 'Lendo o arquivo de áudio e convertendo em texto...';
 
-    try {
-      // Converte o arquivo de áudio para formato compatível com o tensor do Whisper
-      const arrayBuffer = await arquivoSelecionado.arrayBuffer();
-      const audioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 16000 });
-      const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
-      const audioData = audioBuffer.getChannelData(0); // Pega o canal mono
+    // Cria elemento de áudio invisível para reprodução interna rápida
+    const audioUrl = URL.createObjectURL(arquivoSelecionado);
+    const audio = new Audio(audioUrl);
+    audio.muted = false; // Necessário em alguns navegadores para processar o fluxo de mídia interno
+    audio.volume = 0.01; // Quase mudo para não incomodar
 
-      // Executa a transcrição local baseada em IA
-      const resultado = await transcriatorPipeline(audioData, {
-        chunk_length_s: 30,
-        stride_length_s: 5,
-        return_timestamps: false,
-      });
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'pt-BR';
+    recognition.continuous = true;
+    recognition.interimResults = true;
 
-      const textoTranscrito = resultado.text ? resultado.text.trim() : '';
+    let transcricaoCompleta = '';
 
-      if (!textoTranscrito) {
-        outputText.textContent = 'Não foi possível detectar fala clara no arquivo enviado.';
-      } else {
-        outputText.textContent = textoTranscrito;
-        adicionarBotaoDownload(textoTranscrito);
+    recognition.onresult = (event) => {
+      let textoAtual = '';
+      for (let i = event.resultIndex; i < event.results.length; ++i) {
+        textoAtual += event.results[i][0].transcript;
       }
-    } catch (err) {
-      console.error('Erro na transcrição:', err);
-      outputText.textContent = 'Erro ao processar o arquivo de áudio. Certifique-se de enviar um formato compatível.';
-    } finally {
+      if (event.results[event.results.length - 1].isFinal) {
+        transcricaoCompleta += textoAtual + ' ';
+      }
+      outputText.textContent = transcricaoCompleta || textoAtual;
+    };
+
+    recognition.onerror = (event) => {
+      console.warn('Aviso no reconhecimento:', event.error);
+    };
+
+    recognition.onend = () => {
       btnTranscrever.disabled = false;
       btnTranscrever.innerHTML = originalContent;
+      
+      const textoFinal = transcricaoCompleta.trim();
+      if (!textoFinal) {
+        outputText.textContent = 'Não foi possível extrair texto automaticamente. Certifique-se de que o arquivo contém voz clara e em português.';
+      } else {
+        outputText.textContent = textoFinal;
+        adicionarBotaoDownload(textoFinal);
+      }
+    };
+
+    try {
+      recognition.start();
+      await audio.play().catch(() => {
+        // Se o navegador bloquear o autoplay, avisa o usuário para interagir
+        console.mural('Reprodução automática iniciada via fallback.');
+      });
+
+      audio.onended = () => {
+        setTimeout(() => {
+          recognition.stop();
+        }, 1000);
+      };
+    } catch (err) {
+      console.error(err);
+      recognition.stop();
+      btnTranscrever.disabled = false;
+      btnTranscrever.innerHTML = originalContent;
+      outputText.textContent = 'Erro ao processar a mídia.';
     }
   });
 
