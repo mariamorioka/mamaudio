@@ -46,13 +46,7 @@ document.addEventListener('DOMContentLoaded', () => {
     outputText.textContent = 'Enviando áudio para processamento seguro na nuvem...';
 
     try {
-      // Cria um FormData para enviar o arquivo de áudio e os parâmetros da Groq
-      const formData = new FormData();
-      formData.append('file', arquivoSelecionado);
-      formData.append('model', 'whisper-large-v3');
-      formData.append('language', 'pt');
-      formData.append('response_format', 'json');
-
+      // Criando o FormData uma única vez de forma correta
       const formData = new FormData();
       formData.append('file', arquivoSelecionado);
       formData.append('model', 'whisper-large-v3');
@@ -60,7 +54,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const response = await fetch('/api/transcrever', {
         method: 'POST',
-        body: formData, // Envia o FormData estruturado para o backend do Vercel
+        body: formData,
       });
 
       const data = await response.json();
