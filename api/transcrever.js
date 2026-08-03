@@ -1,3 +1,9 @@
+export const config = {
+  api: {
+    bodyParser: false,
+  },
+};
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Método não permitido' });
@@ -10,19 +16,24 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Como o Vercel Serverless recebe a requisição, repassamos o corpo bruto (formData) para a Groq
+    // Captura os dados brutos enviados pelo frontend (FormData)
+    const chunks = [];
+    for await (const chunk of req) {
+      chunks.push(chunk);
+    }
+    const buffer = Buffer.concat(chunks);
+
+    // Cria um novo FormData para enviar à Groq
+    const boundary = '----VercelFormDataBoundary' + Math.random().toString(36).substring(2);
+    
     const response = await fetch('https://api.groq.com/openai/v1/audio/transcriptions', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${groqApiKey}`,
-      },
-      body: req.body,
-      // Importante: repassamos os headers de tipo de conteúdo (multipart/form-data)
-      headers: {
-        'Authorization': `Bearer ${groqApiKey}`,
         ...req.headers,
         host: 'api.groq.com',
-      }
+      },
+      body: buffer
     });
 
     const data = await response.json();
@@ -33,7 +44,7 @@ export default async function handler(req, res) {
 
     return res.status(200).json({ text: data.text });
   } catch (error) {
-    console.error('Erro:', error);
+    console.error('Erro na API:', error);
     return res.status(500).json({ error: error.message });
   }
 }
