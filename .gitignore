@@ -1,0 +1,14 @@
+# Ambiente virtual do Python (muito importante não subir)
+venv/
+env/
+ENV/
+
+# Configurações do VS Code
+.vscode/
+
+# Arquivos do sistema operacional
+.DS_Store
+Thumbs.db
+
+# Arquivos de variáveis de ambiente locais (caso use no futuro)
+.env
