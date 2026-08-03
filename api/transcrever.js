@@ -1,11 +1,3 @@
-export const config = {
-  api: {
-    bodyParser: {
-      sizeLimit: '10mb',
-    },
-  },
-};
-
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Método não permitido' });
@@ -18,12 +10,19 @@ export default async function handler(req, res) {
   }
 
   try {
+    // Como o Vercel Serverless recebe a requisição, repassamos o corpo bruto (formData) para a Groq
     const response = await fetch('https://api.groq.com/openai/v1/audio/transcriptions', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${groqApiKey}`,
       },
       body: req.body,
+      // Importante: repassamos os headers de tipo de conteúdo (multipart/form-data)
+      headers: {
+        'Authorization': `Bearer ${groqApiKey}`,
+        ...req.headers,
+        host: 'api.groq.com',
+      }
     });
 
     const data = await response.json();

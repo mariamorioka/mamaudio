@@ -53,9 +53,14 @@ document.addEventListener('DOMContentLoaded', () => {
       formData.append('language', 'pt');
       formData.append('response_format', 'json');
 
+      const formData = new FormData();
+      formData.append('file', arquivoSelecionado);
+      formData.append('model', 'whisper-large-v3');
+      formData.append('language', 'pt');
+
       const response = await fetch('/api/transcrever', {
         method: 'POST',
-        body: arquivoSelecionado,
+        body: formData, // Envia o FormData estruturado para o backend do Vercel
       });
 
       const data = await response.json();
