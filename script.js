@@ -9,7 +9,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   let arquivoSelecionado = null;
 
-  // Deixa o sistema pronto instantaneamente
   setTimeout(() => {
     if (statusIa) statusIa.innerHTML = '<i class="fa-solid fa-circle-check" style="color: #10b981;"></i> IA Pronta para uso!';
     btnTranscrever.disabled = false;
@@ -35,13 +34,6 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   btnTranscrever.addEventListener('click', async () => {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    
-    if (!SpeechRecognition) {
-      alert('Seu navegador não suporta reconhecimento de fala. Utilize o Google Chrome.');
-      return;
-    }
-
     if (!arquivoSelecionado) {
       alert('Por favor, selecione um arquivo de áudio primeiro.');
       return;
@@ -49,69 +41,43 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const originalContent = btnTranscrever.innerHTML;
     btnTranscrever.disabled = true;
-    btnTranscrever.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> <span>PROCESSANDO TRANSCRIÇÃO...</span>`;
+    btnTranscrever.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> <span>TRANSCREVENDO COM IA...</span>`;
     resultadoContainer.style.display = 'block';
-    outputText.textContent = 'Lendo o arquivo de áudio e convertendo em texto...';
-
-    // Cria elemento de áudio invisível para reprodução interna rápida
-    const audioUrl = URL.createObjectURL(arquivoSelecionado);
-    const audio = new Audio(audioUrl);
-    audio.muted = false; // Necessário em alguns navegadores para processar o fluxo de mídia interno
-    audio.volume = 0.01; // Quase mudo para não incomodar
-
-    const recognition = new SpeechRecognition();
-    recognition.lang = 'pt-BR';
-    recognition.continuous = true;
-    recognition.interimResults = true;
-
-    let transcricaoCompleta = '';
-
-    recognition.onresult = (event) => {
-      let textoAtual = '';
-      for (let i = event.resultIndex; i < event.results.length; ++i) {
-        textoAtual += event.results[i][0].transcript;
-      }
-      if (event.results[event.results.length - 1].isFinal) {
-        transcricaoCompleta += textoAtual + ' ';
-      }
-      outputText.textContent = transcricaoCompleta || textoAtual;
-    };
-
-    recognition.onerror = (event) => {
-      console.warn('Aviso no reconhecimento:', event.error);
-    };
-
-    recognition.onend = () => {
-      btnTranscrever.disabled = false;
-      btnTranscrever.innerHTML = originalContent;
-      
-      const textoFinal = transcricaoCompleta.trim();
-      if (!textoFinal) {
-        outputText.textContent = 'Não foi possível extrair texto automaticamente. Certifique-se de que o arquivo contém voz clara e em português.';
-      } else {
-        outputText.textContent = textoFinal;
-        adicionarBotaoDownload(textoFinal);
-      }
-    };
+    outputText.textContent = 'Enviando áudio para processamento seguro na nuvem...';
 
     try {
-      recognition.start();
-      await audio.play().catch(() => {
-        // Se o navegador bloquear o autoplay, avisa o usuário para interagir
-        console.mural('Reprodução automática iniciada via fallback.');
+      // Cria um FormData para enviar o arquivo de áudio e os parâmetros da Groq
+      const formData = new FormData();
+      formData.append('file', arquivoSelecionado);
+      formData.append('model', 'whisper-large-v3');
+      formData.append('language', 'pt');
+      formData.append('response_format', 'json');
+
+      const response = await fetch('/api/transcrever', {
+        method: 'POST',
+        body: arquivoSelecionado,
       });
 
-      audio.onended = () => {
-        setTimeout(() => {
-          recognition.stop();
-        }, 1000);
-      };
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Erro na transcrição');
+      }
+
+      const textoTranscrito = data.text ? data.text.trim() : '';
+
+      if (!textoTranscrito) {
+        outputText.textContent = 'Nenhum texto foi detectado no arquivo.';
+      } else {
+        outputText.textContent = textoTranscrito;
+        adicionarBotaoDownload(textoTranscrito);
+      }
     } catch (err) {
-      console.error(err);
-      recognition.stop();
+      console.error('Erro:', err);
+      outputText.textContent = 'Ocorreu um erro ao transcrever o áudio. Tente novamente.';
+    } finally {
       btnTranscrever.disabled = false;
       btnTranscrever.innerHTML = originalContent;
-      outputText.textContent = 'Erro ao processar a mídia.';
     }
   });
 
